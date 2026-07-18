@@ -56,7 +56,7 @@ The app reads config from `.env` via Vite's `import.meta.env`. Two files are inv
 The backend base URL is controlled by `VITE_API_BASE_URL` in `.env`:
 
 ```
-VITE_API_BASE_URL=http://localhost:8000/api
+VITE_API_BASE_URL=http://localhost:8080/api
 ```
 
 Only variables prefixed with `VITE_` are exposed to browser code — this is a Vite security feature, so arbitrary environment variables (secrets, host paths, etc.) never leak into the client bundle by accident.
