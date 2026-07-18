@@ -69,16 +69,16 @@ export const apiBaseUrl = requireEnv('VITE_API_BASE_URL')
 
 Import `apiBaseUrl` anywhere you need to call the API instead of hardcoding a URL — see the example `fetchFromApi` action in [src/stores/app.ts](src/stores/app.ts). To point the app at a different backend, change `VITE_API_BASE_URL` in `.env` (or override it in `.env.local`) and restart/reload — see below.
 
-**Note:** Vite bakes `VITE_*` variables into the JS bundle wherever they're used. In dev mode this is re-read every time the dev server (re)starts. In production mode, the value is fixed at `npm run build` time — since the Docker image runs that build at container *start* (see below), changing `.env` and restarting the container is enough; you don't need to rebuild the image.
+**Note:** Vite bakes `VITE_*` variables into the JS bundle wherever they're used. In dev mode this is re-read every time the dev server (re)starts. In production mode, the value is fixed at `npm run build` time — since the Docker image runs that build at container _start_ (see below), changing `.env` and restarting the container is enough; you don't need to rebuild the image.
 
 ### Choosing dev vs. production mode
 
 `APP_ENV` in `.env` controls which mode [docker-entrypoint.sh](docker-entrypoint.sh) starts the container in:
 
-| `APP_ENV` value | What happens |
-|---|---|
+| `APP_ENV` value         | What happens                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------- |
 | `development` (default) | Runs `npm run dev -- --host`. Vite dev server with HMR, source is live-mounted. |
-| `production` | Runs `npm run build`, then serves the compiled `dist/` via nginx. |
+| `production`            | Runs `npm run build`, then serves the compiled `dist/` via nginx.               |
 
 Both modes listen on container port `3000`, mapped to `http://localhost:3000` on the host either way — no need to remember different ports per mode.
 
@@ -164,6 +164,13 @@ npm run build
 - `npm run type-check`
 - `npm run lint`
 - `npm run lint:fix`
+- `npm run format` — format all files with Prettier
+- `npm run format:check` — check formatting without writing
+- `npm run test` — run the Vitest suite once
+- `npm run test:watch` — run Vitest in watch mode
+- `npm run test:coverage` — run Vitest with coverage reporting
+
+CI (`.github/workflows/ci.yml`) runs lint, format:check, type-check, test, and build on every push and pull request to `master`.
 
 ## 💪 Support Vuetify Development
 

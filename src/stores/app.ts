@@ -8,7 +8,7 @@ export const useAppStore = defineStore('app', () => {
 
   // Example of calling the REST interface configured via VITE_API_BASE_URL
   // (see src/config/env.ts and README.md "Configuration").
-  async function fetchFromApi (path: string) {
+  async function fetchFromApi(path: string) {
     const response = await fetch(`${apiBaseUrl}${path}`)
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`)
@@ -16,7 +16,7 @@ export const useAppStore = defineStore('app', () => {
     return response.json()
   }
 
-  async function fetchWelcomeMessage () {
+  async function fetchWelcomeMessage() {
     const { msg } = await fetchFromApi('/welcome')
     welcomeMessage.value = msg
   }
