@@ -11,6 +11,12 @@
       <div v-if="appStore.welcomeMessage" class="text-body-medium text-center">
         {{ appStore.welcomeMessage }}
       </div>
+
+      <div class="mt-8 text-center">
+        <v-btn color="primary" prepend-icon="mdi-table" size="large" to="/records">
+          Manage Records
+        </v-btn>
+      </div>
     </div>
   </v-container>
 </template>

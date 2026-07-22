@@ -69,6 +69,38 @@ export const apiBaseUrl = requireEnv('VITE_API_BASE_URL')
 
 Import `apiBaseUrl` anywhere you need to call the API instead of hardcoding a URL — see the example `fetchFromApi` action in [src/stores/app.ts](src/stores/app.ts). To point the app at a different backend, change `VITE_API_BASE_URL` in `.env` (or override it in `.env.local`) and restart/reload — see below.
 
+### REST API contract (Records CRUD)
+
+The Records page (`/records`, via [src/stores/records.ts](src/stores/records.ts)) expects the backend
+(`api/controllers/RestController.php` in the PHP webapp) to implement this JSON contract:
+
+| Method   | Path               | Request body  | Response                    |
+| -------- | ------------------ | ------------- | --------------------------- |
+| `GET`    | `/api/index`       | —             | JSON array of records       |
+| `GET`    | `/api/read/{id}`   | —             | single record JSON          |
+| `POST`   | `/api/create`      | record fields | any 2xx (list is refetched) |
+| `PUT`    | `/api/update/{id}` | record fields | any 2xx (list is refetched) |
+| `DELETE` | `/api/delete/{id}` | —             | any 2xx (list is refetched) |
+
+A record looks like:
+
+```json
+{
+  "id": 1,
+  "name": "Don Myers",
+  "phone": "555-1234",
+  "in_office": false,
+  "out_until": "2026-07-22 14:30:00"
+}
+```
+
+- `id` is server-assigned; create/update request bodies contain the other four fields only.
+- `in_office` is a JSON boolean.
+- `out_until` is a `YYYY-MM-DD HH:MM:SS` datetime string, or `null` when no return time is set.
+- Since the app (`:3000`) and the API (`:8080`) are different origins, the backend must answer CORS
+  preflight (`OPTIONS`) requests and send `Access-Control-Allow-Origin` / `-Methods` / `-Headers`
+  for the `POST`/`PUT`/`DELETE` calls to work from the browser.
+
 **Note:** Vite bakes `VITE_*` variables into the JS bundle wherever they're used. In dev mode this is re-read every time the dev server (re)starts. In production mode, the value is fixed at `npm run build` time — since the Docker image runs that build at container _start_ (see below), changing `.env` and restarting the container is enough; you don't need to rebuild the image.
 
 ### Choosing dev vs. production mode
