@@ -16,6 +16,10 @@
                 <v-btn color="primary" prepend-icon="mdi-table" size="large" to="/records">
                     Manage Records
                 </v-btn>
+
+                <v-btn class="ml-3" color="secondary" prepend-icon="mdi-calendar-month" size="large" to="/calendar" variant="flat">
+                    Calendar
+                </v-btn>
             </div>
         </div>
     </v-container>
