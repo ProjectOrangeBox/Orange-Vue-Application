@@ -1,16 +1,12 @@
+import type { CalendarEvent, CalendarEventInput } from '@projectorangebox/api-types'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { apiBaseUrl } from '@/config/env'
 import { ApiError } from '@/stores/records'
 
-export interface CalendarEvent {
-  id: number
-  title: string
-  description: string
-  date: string
-}
-
-export type CalendarEventInput = Omit<CalendarEvent, 'id'>
+// Generated from the PHP CalendarEventDto - see the @projectorangebox/api-types
+// package. Re-exported so importing them from this store keeps working.
+export { type CalendarEvent, type CalendarEventInput } from '@projectorangebox/api-types'
 
 async function readFailure(
   response: Response,

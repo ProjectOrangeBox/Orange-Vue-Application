@@ -11,19 +11,16 @@
 // `out_until` uses the MySQL-style datetime string 'YYYY-MM-DD HH:mm:ss',
 // or null when no return time is set.
 
+import type { RecordInput, RecordItem } from '@projectorangebox/api-types'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { apiBaseUrl } from '@/config/env'
 
-export interface RecordItem {
-  id: number
-  name: string
-  phone: string
-  in_office: boolean
-  out_until: string | null
-}
-
-export type RecordInput = Omit<RecordItem, 'id'>
+// Generated from the PHP RecordDto these endpoints validate against, rather
+// than declared here a second time - see the @projectorangebox/api-types
+// package. Re-exported so importing them from this store keeps working: the
+// store stays the boundary for everything that talks to /api.
+export { type RecordInput, type RecordItem } from '@projectorangebox/api-types'
 
 // Thrown by the store when the API responds with a failure status. On a
 // 422 validation failure `errors` carries the field-keyed messages from the
