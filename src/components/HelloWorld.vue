@@ -20,6 +20,10 @@
                 <v-btn class="ml-3" color="secondary" prepend-icon="mdi-calendar-month" size="large" to="/calendar" variant="flat">
                     Calendar
                 </v-btn>
+
+                <v-btn class="ml-3" color="secondary" prepend-icon="mdi-receipt-text" size="large" to="/orders" variant="flat">
+                    Orders
+                </v-btn>
             </div>
         </div>
     </v-container>
