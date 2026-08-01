@@ -8,6 +8,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Calendar from '@/pages/calendar.vue'
 import Index from '@/pages/index.vue'
+import Orders from '@/pages/orders.vue'
 import Records from '@/pages/records.vue'
 
 const router = createRouter({
@@ -24,6 +25,10 @@ const router = createRouter({
     {
       path: '/calendar',
       component: Calendar,
+    },
+    {
+      path: '/orders',
+      component: Orders,
     },
   ],
 })
