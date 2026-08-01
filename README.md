@@ -17,6 +17,16 @@ Scaffolded with Vuetify CLI.
 - State: Pinia
 - Package manager: npm
 
+## 🖥️ What's in it
+
+Three example screens, each exercising a different part of the backend:
+
+| Page        | What it demonstrates                                                                                                  |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| `/records`  | flat CRUD against a single table                                                                                      |
+| `/calendar` | a month view over dated rows                                                                                          |
+| `/orders`   | a parent with nested line items, per-row validation errors, login and permissions, and a CSV export from the same URL |
+
 ## 🧭 Start Here
 
 - Main entry: `src/main.ts`
@@ -30,6 +40,8 @@ Scaffolded with Vuetify CLI.
 - `src/main.ts` — application entry point
 - `src/App.vue` — root component
 - `src/components/` — reusable Vue components
+- `src/pages/` — one component per screen (`records`, `calendar`, `orders`)
+- `src/router/index.ts` — routes, registered **by hand**; adding a page here is not optional
 - `src/config/env.ts` — typed accessors for runtime config (e.g. `apiBaseUrl`)
 - `src/stores/` — Pinia stores
 - `src/plugins/` — plugin registration and setup
@@ -56,7 +68,15 @@ The app reads config from `.env` via Vite's `import.meta.env`. Two files are inv
 The backend base URL is controlled by `VITE_API_BASE_URL` in `.env`:
 
 ```
-VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_BASE_URL=/api
+```
+
+**Relative on purpose.** The PHP session cookie is `SameSite=Strict`, so a browser will not send it to a different origin — an absolute `http://localhost:8080/api` means logging in appears to succeed and every request afterwards comes back as the guest. Both the Vite dev server and the production nginx config proxy `/api` through to the PHP app, so the browser only ever sees one origin and no CORS is involved at all.
+
+The dev proxy targets `host.docker.internal:8080`, because inside the app's container `localhost` is that container. Running the dev server directly on your machine instead:
+
+```sh
+API_PROXY_TARGET=http://localhost:8080 npm run dev
 ```
 
 Only variables prefixed with `VITE_` are exposed to browser code — this is a Vite security feature, so arbitrary environment variables (secrets, host paths, etc.) never leak into the client bundle by accident.
@@ -97,11 +117,97 @@ A record looks like:
 - `id` is server-assigned; create/update request bodies contain the other four fields only.
 - `in_office` is a JSON boolean.
 - `out_until` is a `YYYY-MM-DD HH:MM:SS` datetime string, or `null` when no return time is set.
-- Since the app (`:3000`) and the API (`:8080`) are different origins, the backend must answer CORS
-  preflight (`OPTIONS`) requests and send `Access-Control-Allow-Origin` / `-Methods` / `-Headers`
-  for the `POST`/`PUT`/`DELETE` calls to work from the browser.
+- The app and the API are the same origin from the browser's point of view, because `/api` is
+  proxied (see above), so there is no CORS preflight to answer.
 
 **Note:** Vite bakes `VITE_*` variables into the JS bundle wherever they're used. In dev mode this is re-read every time the dev server (re)starts. In production mode, the value is fixed at `npm run build` time — since the Docker image runs that build at container _start_ (see below), changing `.env` and restarting the container is enough; you don't need to rebuild the image.
+
+### REST API contract (Orders)
+
+The Orders page (`/orders`, via [src/stores/orders.ts](src/stores/orders.ts)) is the one that
+exercises the harder parts: a parent record with a variable number of child rows, per-row
+validation errors, permissions, and content negotiation.
+
+| Method   | Path               | Request body | Response                                 |
+| -------- | ------------------ | ------------ | ---------------------------------------- |
+| `GET`    | `/api/orders`      | —            | JSON array of orders — or CSV, see below |
+| `GET`    | `/api/orders/{id}` | —            | single order JSON                        |
+| `POST`   | `/api/orders`      | `OrderInput` | `201 {"id": n}`                          |
+| `PUT`    | `/api/orders/{id}` | `OrderInput` | `200 {"success": true}`                  |
+| `DELETE` | `/api/orders/{id}` | —            | `204`                                    |
+
+An order carries its line items:
+
+```json
+{
+  "id": 1,
+  "customer_id": 1,
+  "ordered_on": "2026-07-28",
+  "notes": "Leave at the side door.",
+  "lines": [
+    {
+      "id": 1,
+      "sku": "APL-001",
+      "description": "Apple seeds, 1lb bag",
+      "qty": 3,
+      "unit_price": 4.5,
+      "line_total": 13.5
+    }
+  ]
+}
+```
+
+#### Validation errors name the row
+
+This is the part worth knowing. A `422` keys line errors by the **index the client sent**, so each
+row can show its own messages rather than one "something is wrong" over the whole table:
+
+```json
+{
+  "errors": {
+    "lines": { "1": { "sku": ["SKU is required"], "qty": ["Quantity must be greater than 0"] } }
+  }
+}
+```
+
+`errors.lines` is either that per-row map, or a flat list of messages about the list itself
+(`["Lines is required"]`) when there are no rows to blame. The store sorts one from the other, so
+the page only ever sees `fields` and `lines`.
+
+#### Reading is open, writing is not
+
+`POST` and `DELETE` require a session with the matching permission:
+
+| Status | Meaning                                                  |
+| ------ | -------------------------------------------------------- |
+| `401`  | not logged in — the login dialog can fix it              |
+| `403`  | logged in, but without `orders.create` / `orders.delete` |
+
+Session endpoints are `POST /api/login`, `POST /api/logout` and `GET /api/me`
+([src/stores/auth.ts](src/stores/auth.ts)). `/api/me` always answers `200` — "nobody" is the guest
+user, not an error. The permissions it returns decide which buttons render; they are never the
+check, since the browser can lie about them and every guarded endpoint re-checks server-side.
+
+The example login is `admin@example.com` / `orange123` — a published demo credential, not a secret.
+
+#### CSV from the same URL
+
+`GET /api/orders` with `Accept: text/csv` returns the same collection as a spreadsheet. It has to be
+fetched rather than linked, because a plain `<a>` cannot set an `Accept` header — see `downloadCsv`
+in [src/pages/orders.vue](src/pages/orders.vue).
+
+### Types are generated from the backend
+
+`RecordItem`, `CalendarEvent`, `Order`, `LineItem` and their `…Input` variants are **not** written by
+hand here. They come from [`@projectorangebox/api-types`](https://github.com/ProjectOrangeBox/api-types),
+generated from the PHP `Dto` classes that validate these payloads, and published automatically by the
+backend's CI. The stores re-export them, so pages import from the store as before:
+
+```ts
+import type { OrderInput } from '@projectorangebox/api-types'
+```
+
+To pick up a backend schema change, `npm update @projectorangebox/api-types`.
 
 ### Choosing dev vs. production mode
 
