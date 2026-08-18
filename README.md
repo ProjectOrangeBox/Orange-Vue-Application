@@ -92,7 +92,7 @@ Import `apiBaseUrl` anywhere you need to call the API instead of hardcoding a UR
 ### REST API contract (Records CRUD)
 
 The Records page (`/records`, via [src/stores/records.ts](src/stores/records.ts)) expects the backend
-(`api/controllers/RestController.php` in the PHP webapp) to implement this JSON contract:
+(`application/api/controllers/RestController.php` in the PHP webapp) to implement this JSON contract:
 
 | Method   | Path               | Request body  | Response                    |
 | -------- | ------------------ | ------------- | --------------------------- |
