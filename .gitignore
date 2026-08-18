@@ -25,4 +25,9 @@ coverage
 *.sw?
 
 *.tsbuildinfo
-.env
+
+# .env is committed on purpose - it holds non-secret defaults (the
+# container start mode and the relative API base URL) that every checkout
+# needs, and docker-compose.yml names it in env_file, so a clone without
+# it cannot start at all. Machine-specific overrides and anything secret
+# belong in .env.local, which the *.local rule above already ignores.
